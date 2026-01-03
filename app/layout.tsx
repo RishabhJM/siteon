@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
+import Provider from "./provider";
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const outfitMono = Outfit({
+  variable: "--font-outfit-mono",
   subsets: ["latin"],
 });
 
@@ -23,12 +25,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
-    </html>
-  );
+    <ClerkProvider>
+      <html lang="en">
+        <body className={outfit.className}>
+          <Provider>
+            {children}
+            <Toaster position="top-center" />
+          </Provider>
+        </body>
+      </html>
+    </ClerkProvider>
+  );  
 }
