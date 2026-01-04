@@ -198,7 +198,7 @@ function Playground() {
           loading={loading}
         />
         <WebsiteDesign generatedCode={generatedCode?.replace("```", "")} />
-        {/* <ElementSettings /> */}
+        
       </div>
     </div>
   );

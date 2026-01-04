@@ -10,38 +10,39 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import ViewCodeBlock from "./ViewCodeBlock";
+import { useAuth } from "@clerk/nextjs";
 
 function WebPageTools({
   selectedScreenSize,
   setSelectedScreenSize,
   generatedCode,
 }: any) {
+  const [finalCode, setFinalCode] = useState<string>();
+  const { has } = useAuth();
 
-    const [finalCode,setFinalCode] = useState<string>();
+  const hasUnlimitedAccess = has && has({ plan: "unlimited" });
 
-    const downloadCode = () => {
-        if (!finalCode) return;
-        const blob = new Blob([finalCode], { type: "text/html" });
+  const downloadCode = () => {
+    if (!finalCode) return;
+    const blob = new Blob([finalCode], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-        a.href=url;
-        a.download='index.html'
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "index.html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
-    }
-
-    useEffect(()=>{
-        const cleanCode =
-        (DEFAULT_HTML_HEADER.replace("<!--{code}-->", generatedCode) || "")
-          .replaceAll("```html", "")
-          .replaceAll("```", "")
-          .replace("html", "") ?? "";
+  useEffect(() => {
+    const cleanCode =
+      (DEFAULT_HTML_HEADER.replace("<!--{code}-->", generatedCode) || "")
+        .replaceAll("```html", "")
+        .replaceAll("```", "")
+        .replace("html", "") ?? "";
     setFinalCode(cleanCode);
-
-    },[generatedCode])
+  }, [generatedCode]);
   const openInNewTab = () => {
     if (!finalCode) return;
 
@@ -77,14 +78,18 @@ function WebPageTools({
         <Button variant={"outline"} onClick={() => openInNewTab()}>
           View <SquareArrowOutUpRight></SquareArrowOutUpRight>
         </Button>
-        <ViewCodeBlock code={finalCode}>
-          <Button variant={"outline"}>
-            View <Code></Code>
+        {hasUnlimitedAccess && (
+          <ViewCodeBlock code={finalCode}>
+            <Button variant={"outline"}>
+              View <Code></Code>
+            </Button>
+          </ViewCodeBlock>
+        )}
+        {hasUnlimitedAccess && (
+          <Button variant={"outline"} onClick={() => downloadCode()}>
+            Download <Download></Download>
           </Button>
-        </ViewCodeBlock>
-        <Button variant={"outline"} onClick={()=> downloadCode()}>
-          Download <Download></Download>
-        </Button>
+        )}
       </div>
     </div>
   );

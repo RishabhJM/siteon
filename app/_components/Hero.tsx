@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { SignInButton, useUser } from "@clerk/nextjs";
+import { UserDetailsContext } from "@/context/UserDetailsContext";
+import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
 import {
   ArrowUp,
@@ -13,7 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
@@ -49,8 +50,16 @@ function Hero() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
   const { user } = useUser();
+  const { userDetails, setUserDetails } = useContext(UserDetailsContext);
+  const { has } = useAuth();
+
+  const hasUnlimitedAccess = has && has({ plan: "unlimited" });
 
   const CreateNewProject = async () => {
+    if(!hasUnlimitedAccess && userDetails.credits! <= 0 ){
+      toast.error("You have no credits left. Please upgrade to continue.");
+      return;
+    }
     const projectId = uuidv4();
     const frameId = Math.floor(Math.random() * 10000);
     const messages = [
@@ -65,9 +74,14 @@ function Hero() {
         projectId: projectId,
         frameId: frameId,
         messages: messages,
+        credits:userDetails?.credits
       });
       console.log(result.data);
       toast.success("Project created successfully!");
+      setUserDetails((prev:any)=> ({
+        ...prev,
+        credits:prev.credits! -1
+      }))
       //Navigate to Playground
       router.push(`/playground/${projectId}?frameId=${frameId}`);
     } catch (error: any) {

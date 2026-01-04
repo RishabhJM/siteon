@@ -4,25 +4,31 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useUser } from "@clerk/nextjs";
 import { UserDetailsContext } from "@/context/UserDetailsContext";
+import { OnSaveContext } from "@/context/OnSaveContext";
 function Provider({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const {user, isLoaded, isSignedIn} = useUser();
-  const [userDetails,setUserDetails] =  useState<any>();
+  const { user, isLoaded, isSignedIn } = useUser();
+  const [userDetails, setUserDetails] = useState<any>();
+  const [onSaveData, setOnSaveData] = useState<any>();
   useEffect(() => {
-    console.log("USER",user);
-    console.log("isLoaded:",isLoaded,"isSignedIn:",isSignedIn);
-    if(isLoaded && isSignedIn && user) {
+    console.log("USER", user);
+    console.log("isLoaded:", isLoaded, "isSignedIn:", isSignedIn);
+    if (isLoaded && isSignedIn && user) {
       CreateNewUser();
     }
   }, [isLoaded, isSignedIn, user]);
   const CreateNewUser = async () => {
     try {
-      const result = await axios.post("/api/users", {}, {
-        withCredentials: true
-      });
+      const result = await axios.post(
+        "/api/users",
+        {},
+        {
+          withCredentials: true,
+        }
+      );
       console.log("RESULT DATA:", result.data);
       setUserDetails(result.data?.user);
     } catch (error: any) {
@@ -30,7 +36,15 @@ function Provider({
       console.error("FULL ERROR:", error);
     }
   };
-  return <div><UserDetailsContext.Provider value={{userDetails,setUserDetails}}>{children}</UserDetailsContext.Provider></div>;
+  return (
+    <div>
+      <UserDetailsContext.Provider value={{ userDetails, setUserDetails }}>
+        <OnSaveContext.Provider value={{ onSaveData, setOnSaveData }}>
+          {children}
+        </OnSaveContext.Provider>
+      </UserDetailsContext.Provider>
+    </div>
+  );
 }
 
 export default Provider;
