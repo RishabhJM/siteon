@@ -139,13 +139,11 @@ function WebsiteDesign({ generatedCode }: Props) {
   };
 
   return (
-    <div className="flex gap-2 w-full">
+    <div className="flex flex-col lg:flex-row gap-2 w-full">
       <div className="w-full p-5 flex items-center flex-col">
         <iframe
           ref={iframeRef}
-          className={`${
-            selectedScreenSize == "web" ? "w-full" : "w-130"
-          } + " h-175 border-2 rounded-xl`}
+          className={`${selectedScreenSize == "web" ? "w-full" : "w-130"} h-175 border-2 rounded-xl max-w-full`}
           sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
         />
         <WebPageTools

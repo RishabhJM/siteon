@@ -24,8 +24,8 @@ function ChatSection({ messages, onSend, loading }: Props) {
     
   },[])
   return (
-    <div className="w-96 shadow h-[92vh] p-4 flex flex-col justify-between">
-      <div>
+    <div className="w-full lg:w-96 shadow h-[50vh] lg:h-[92vh] p-4 flex flex-col justify-between">
+      <div className="flex-1 overflow-y-auto">
         {messages?.length === 0 ? (
           <p className="text-gray-400 text-center">No messages</p>
         ) : (

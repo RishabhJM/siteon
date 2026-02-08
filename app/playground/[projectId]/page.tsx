@@ -134,6 +134,7 @@ function Playground() {
 
       const chunk = decoder.decode(value, { stream: true });
       aiResponse += chunk;
+      // console.log(aiResponse)
 
       if (!isCode && aiResponse.includes("```html")) {
         isCode = true;
@@ -144,6 +145,7 @@ function Playground() {
         setGeneratedCode((prev: any) => prev + chunk);
       }
     }
+    // console.log(aiResponse)
 
     if (!isCode) {
       setMessages((prev: any) => [
@@ -191,7 +193,7 @@ function Playground() {
   return (
     <div>
       <PlaygroundHeader />
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         <ChatSection
           messages={messages ?? []}
           onSend={(input: string) => sendMessage(input)}

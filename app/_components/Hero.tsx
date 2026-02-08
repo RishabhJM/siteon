@@ -34,7 +34,7 @@ const suggestion = [
   {
     label: "Hero",
     prompt:
-      "Create a modern header and centered hero section for a productivity SaaS. Include a badge for feature announcement, a title with a subtle gradient effect, subtitle, CTA, small social proof and an image.",
+      "Create a modern header and centered hero section for a productivity SaaS...",
     icon: HomeIcon,
   },
   {
@@ -46,9 +46,9 @@ const suggestion = [
 ];
 
 function Hero() {
-  const [userInput, setUserInput] = useState<string>("");
+  const [userInput, setUserInput] = useState("");
   const router = useRouter();
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const { user } = useUser();
   const { userDetails, setUserDetails } = useContext(UserDetailsContext);
   const { has } = useAuth();
@@ -56,88 +56,96 @@ function Hero() {
   const hasUnlimitedAccess = has && has({ plan: "unlimited" });
 
   const CreateNewProject = async () => {
-    if(!hasUnlimitedAccess && userDetails.credits! <= 0 ){
+    if (!hasUnlimitedAccess && userDetails.credits! <= 0) {
       toast.error("You have no credits left. Please upgrade to continue.");
       return;
     }
+
     const projectId = uuidv4();
     const frameId = Math.floor(Math.random() * 10000);
-    const messages = [
-      {
-        role: "user",
-        content: userInput,
-      },
-    ];
+
     try {
       setLoading(true);
-      const result = await axios.post("/api/projects", {
-        projectId: projectId,
-        frameId: frameId,
-        messages: messages,
-        credits:userDetails?.credits
+      await axios.post("/api/projects", {
+        projectId,
+        frameId,
+        messages: [{ role: "user", content: userInput }],
+        credits: userDetails?.credits,
       });
-      console.log(result.data);
+
       toast.success("Project created successfully!");
-      setUserDetails((prev:any)=> ({
+      setUserDetails((prev: any) => ({
         ...prev,
-        credits:prev.credits! -1
-      }))
-      //Navigate to Playground
+        credits: prev.credits! - 1,
+      }));
+
       router.push(`/playground/${projectId}?frameId=${frameId}`);
-    } catch (error: any) {
-      console.error("Error creating project:", error);
+    } catch {
       toast.error("Failed to create project. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
+
   return (
-    <div className="flex flex-col items-center justify-center h-[90vh]">
-      <div>
-        <h2 className="font-bold text-6xl">What are you shipping today?</h2>
-        <p className="mt-2 text-xl text-gray-500 text-center">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10vh)] px-4 sm:px-6 py-8">
+
+
+      {/* Heading */}
+      <div className="text-center">
+        <h2 className="font-bold text-4xl md:text-6xl leading-tight">
+          What are you shipping today?
+        </h2>
+        <p className="mt-2 text-base md:text-xl text-gray-500">
           Build the website of your dreams, with just a few clicks
         </p>
       </div>
-      <div className="w-full max-w-2xl p-5 border mt-5 rounded-2xl">
+
+      {/* Input box */}
+      <div className="w-full max-w-2xl p-4 md:p-5 border mt-5 rounded-2xl">
         <textarea
           placeholder="Describe the design of your page"
-          className="w-full h-24 focus:outline-none focus:ring-0 resize-none"
+          className="w-full h-24 text-sm md:text-base focus:outline-none resize-none"
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-        ></textarea>
-        <div className="flex justify-between items-center">
-          <Button variant={"outline"}>
-            <ImagePlus></ImagePlus>
+        />
+
+        <div className="flex justify-between items-center mt-2">
+          <Button variant="outline" size="icon">
+            <ImagePlus />
           </Button>
+
           {!user ? (
-            <SignInButton mode="redirect" forceRedirectUrl={"/workspace"}>
+            <SignInButton mode="redirect" forceRedirectUrl="/workspace">
               <Button disabled={!userInput}>
                 <ArrowUp className="h-4 w-4" />
               </Button>
             </SignInButton>
           ) : (
-              <Button
-                disabled={!userInput || userInput.length === 0 || loading}
-                onClick={CreateNewProject}
-              >
-                {loading ? (
-                  <Loader2Icon className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ArrowUp className="h-4 w-4" />
-                )}
-              </Button>
+            <Button
+              disabled={!userInput || loading}
+              onClick={CreateNewProject}
+            >
+              {loading ? (
+                <Loader2Icon className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowUp className="h-4 w-4" />
+              )}
+            </Button>
           )}
         </div>
       </div>
-      <div className="mt-4 flex gap-3">
+
+      {/* Suggestions */}
+      <div className="mt-4 flex flex-wrap justify-center gap-2 md:gap-3">
         {suggestion.map((option, index) => (
           <Button
             key={index}
-            variant={"outline"}
+            variant="outline"
+            className="flex items-center gap-2 text-sm"
             onClick={() => setUserInput(option.prompt)}
           >
-            <option.icon />
+            <option.icon className="h-4 w-4" />
             {option.label}
           </Button>
         ))}

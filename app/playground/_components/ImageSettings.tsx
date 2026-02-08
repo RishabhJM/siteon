@@ -135,7 +135,7 @@ function ImageSettings({ selectedEl }: Props) {
   };
 
   return (
-    <div className="w-96 shadow p-4 space-y-4">
+    <div className="w-full lg:w-96 shadow p-4 space-y-4">
       <h2 className="flex gap-2 items-center font-bold">
         <ImageIcon /> Image Settings
       </h2>
