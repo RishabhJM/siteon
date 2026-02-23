@@ -28,16 +28,14 @@ Instructions:
 
 1. If the user input is explicitly asking to generate code, design, or HTML/CSS/JS output (e.g., "Create a landing page", "Build a dashboard", "Generate HTML Tailwind CSS code"), then:
 
-   - Generate a complete HTML Tailwind CSS code using Flowbite UI components.  
+   - Generate a complete HTML Tailwind CSS code using Flowbite UI components, starting from <html> tag(Not <!DOCTYPE html).  
    - Use a modern design with **blue as the primary color theme**.  
-   - Only include the <body> content (do not add <head> or <title>).  
+   - Remember this: Only include the <body> content (do not add <head> or <title>).  
    - Make it fully responsive for all screen sizes.  
    - All primary components must match the theme color.  
    - Add proper padding and margin for each element.  
    - Components should be independent; do not connect them.  
-   - Use placeholders for all images:  
-       - Light mode: https://community.softr.io/uploads/db9110/original/2X/7/74e6e7e382d0ff5d7773ca9a87e6f6f8817a68a6.jpeg
-       - Dark mode: https://www.cibaky.com/wp-content/uploads/2015/12/placeholder-3.jpg
+   - Use placeholders for all images: https://community.softr.io/uploads/db9110/original/2X/7/74e6e7e382d0ff5d7773ca9a87e6f6f8817a68a6.jpeg
        - Add alt tag describing the image prompt.  
    - Use the following libraries/components where appropriate:  
        - FontAwesome icons (fa fa-)  
@@ -52,7 +50,7 @@ Instructions:
    - Do not include broken links.  
    - Do not add any extra text before or after the HTML code.  
 
-2. If the user input is **general text or greetings** (e.g., "Hi", "Hello", "How are you?") **or does not explicitly ask to generate code**, then:
+2. If the user input is "general text or greetings" (e.g., "Hi", "Hello", "How are you?") or does not explicitly ask to generate code, then:
 
    - Respond with a simple, friendly text message instead of generating any code.  
 
@@ -82,7 +80,8 @@ function Playground() {
       "/api/frames?frameId=" + frameId + "&projectId=" + projectId,
       {}
     );
-    console.log("RESULT FRAME DATA FROM DB", result?.data);
+    // console.log("RESULT FRAME DATA FROM DB", result?.data);
+    // console.log("RESULT FRAME Design DATA FROM DB", result?.data?.designCode);
     setFrameDetails(result.data);
     if (result.data?.chatMessages?.length === 1) {
       const userMsg = result.data?.chatMessages[0].content;
@@ -134,7 +133,7 @@ function Playground() {
 
       const chunk = decoder.decode(value, { stream: true });
       aiResponse += chunk;
-      // console.log(aiResponse)
+      console.log(aiResponse)
 
       if (!isCode && aiResponse.includes("```html")) {
         isCode = true;
@@ -145,7 +144,7 @@ function Playground() {
         setGeneratedCode((prev: any) => prev + chunk);
       }
     }
-    // console.log(aiResponse)
+    console.log(aiResponse)
 
     if (!isCode) {
       setMessages((prev: any) => [

@@ -23,31 +23,24 @@ function WebsiteDesign({ generatedCode }: Props) {
   const {onSaveData,setOnSaveData} = useContext(OnSaveContext);
 
 
-  // Initialize iframe shell once
   useEffect(() => {
     if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
+    const cleanCode = generatedCode
+      ?.replaceAll("```html", "")
+      .replaceAll("```", "")
+      .replace("<!--{code}-->", "")
+      .replace(/^html\n?/, "") ?? "";
+    const fullHtml = DEFAULT_HTML_HEADER.replace("<!--{code}-->", cleanCode);
+    iframeRef.current.srcdoc = fullHtml;
+  }, [generatedCode]);
+
+  // Attach element-picking event listeners after the iframe document is ready.
+  // Called by the iframe's onLoad — fires every time srcdoc refreshes.
+  const handleIframeLoad = () => {
+    const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
-
-    doc.open();
-    doc.write(DEFAULT_HTML_HEADER);
-    doc.close();
-  }, []);
-
-  useEffect(() => {
-    if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
-
     const root = doc.getElementById("root");
     if (!root) return;
-
-    root.innerHTML =
-      generatedCode
-        ?.replaceAll("```html", "")
-        .replaceAll("```", "")
-        .replace("<!--{code}-->", "")
-        .replace("html", "") ?? "";
 
     let hoverEl: HTMLElement | null = null;
     let selectedEl: HTMLElement | null = null;
@@ -56,10 +49,7 @@ function WebsiteDesign({ generatedCode }: Props) {
       const target = e.target as HTMLElement;
       if (!target || selectedEl) return;
       if (target === root || target === doc.body) return;
-
-      if (hoverEl && hoverEl !== target) {
-        hoverEl.style.outline = "";
-      }
+      if (hoverEl && hoverEl !== target) hoverEl.style.outline = "";
       hoverEl = target;
       hoverEl.style.outline = "2px dotted blue";
     };
@@ -74,16 +64,12 @@ function WebsiteDesign({ generatedCode }: Props) {
     const handleClick = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-
       const target = e.target as HTMLElement;
       if (!target || target === root) return;
-      console.log("Selected Element", target);
-
       if (selectedEl && selectedEl !== target) {
         selectedEl.style.outline = "";
         selectedEl.removeAttribute("contenteditable");
       }
-
       selectedEl = target;
       selectedEl.style.outline = "2px solid red";
       selectedEl.setAttribute("contenteditable", "true");
@@ -94,16 +80,14 @@ function WebsiteDesign({ generatedCode }: Props) {
     root.addEventListener("mouseover", handleMouseOver);
     root.addEventListener("mouseout", handleMouseOut);
     root.addEventListener("click", handleClick);
-
-    return () => {
-      root.removeEventListener("mouseover", handleMouseOver);
-      root.removeEventListener("mouseout", handleMouseOut);
-      root.removeEventListener("click", handleClick);
-    };
-  }, [generatedCode]);
+  };
 
   useEffect(()=>{
-    onSaveData && onSaveCode();
+    if(onSaveData){
+      console.log("SAVE CALLED");
+      onSaveCode();
+      setOnSaveData(null);
+    }
   },[onSaveData])
 
   const onSaveCode= async ()=>{
@@ -112,7 +96,6 @@ function WebsiteDesign({ generatedCode }: Props) {
         const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document;
         if(iframeDoc){
           const cloneDoc = iframeDoc.documentElement.cloneNode(true) as HTMLElement;
-          //remove all outlines
           const AllEls = cloneDoc.querySelectorAll<HTMLElement>("*");
           AllEls.forEach(el=>{
             el.style.outline = "";
@@ -143,6 +126,7 @@ function WebsiteDesign({ generatedCode }: Props) {
       <div className="w-full p-5 flex items-center flex-col">
         <iframe
           ref={iframeRef}
+          onLoad={handleIframeLoad}
           className={`${selectedScreenSize == "web" ? "w-full" : "w-130"} h-175 border-2 rounded-xl max-w-full`}
           sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"
         />

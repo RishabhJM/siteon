@@ -119,8 +119,8 @@ function SidebarWrapper({
           <div className="space-y-2">
             {!loading
               ? projectList.map((project: any, index: number) => (
+                <div className="py-[2px]" key={index}>
                   <Link
-                    key={index}
                     href={`/playground/${project.projectId}?frameId=${project.frameId}`}
                     onClick={onNavigate}
                   >
@@ -128,6 +128,7 @@ function SidebarWrapper({
                       {project?.chats[0]?.chatMessage[0]?.content}
                     </h3>
                   </Link>
+                </div>
                 ))
               : [1, 2, 3, 4].map((_, i) => (
                   <Skeleton key={i} className="h-10 rounded-lg" />

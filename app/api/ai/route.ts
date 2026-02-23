@@ -8,7 +8,7 @@ export async function POST(req:NextRequest) {
         const response = await axios.post(
             "https://openrouter.ai/api/v1/chat/completions",
             {
-                model: "nvidia/nemotron-nano-9b-v2:free", 
+                model: "arcee-ai/trinity-large-preview:free", 
                 messages,
                 stream: true, // enable streaming
             },
