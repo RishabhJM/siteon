@@ -21,22 +21,33 @@ function WebsiteDesign({ generatedCode }: Props) {
   const [selectedScreenSize, setSelectedScreenSize] = useState<string>("web");
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>();
   const {onSaveData,setOnSaveData} = useContext(OnSaveContext);
+  const [iframeReady, setIframeReady] = useState(false);
 
 
   useEffect(() => {
     if (!iframeRef.current) return;
+    iframeRef.current.srcdoc = DEFAULT_HTML_HEADER;
+  }, []);
+
+
+  useEffect(() => {
+    if (!iframeReady || !iframeRef.current) return;
+    const doc = iframeRef.current.contentDocument;
+    if (!doc) return;
+    const root = doc.getElementById("root");
+    if (!root) return;
     const cleanCode = generatedCode
       ?.replaceAll("```html", "")
       .replaceAll("```", "")
       .replace("<!--{code}-->", "")
       .replace(/^html\n?/, "") ?? "";
-    const fullHtml = DEFAULT_HTML_HEADER.replace("<!--{code}-->", cleanCode);
-    iframeRef.current.srcdoc = fullHtml;
-  }, [generatedCode]);
+    root.innerHTML = cleanCode;
+    setSelectedElement(null); // clear stale selection when DOM is replaced
+  }, [generatedCode, iframeReady]);
 
-  // Attach element-picking event listeners after the iframe document is ready.
-  // Called by the iframe's onLoad — fires every time srcdoc refreshes.
+
   const handleIframeLoad = () => {
+    setIframeReady(true); // unblocks the content effect
     const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
     const root = doc.getElementById("root");
