@@ -122,15 +122,15 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
                     type="single"
                     value={align}
                     onValueChange={setAlign}
-                    className="bg-gray-100 rounded-lg p-1 inline-flex w-full justify-between"
+                    className="inline-flex w-full justify-between rounded-lg bg-muted p-1"
                 >
-                    <ToggleGroupItem value="left" className="p-2 rounded hover:bg-gray-200 flex-1">
+                    <ToggleGroupItem value="left" className="flex-1 rounded p-2 hover:bg-accent">
                         <AlignLeft size={20} />
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="center" className="p-2 rounded hover:bg-gray-200 flex-1">
+                    <ToggleGroupItem value="center" className="flex-1 rounded p-2 hover:bg-accent">
                         <AlignCenter size={20} />
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="right" className="p-2 rounded hover:bg-gray-200 flex-1">
+                    <ToggleGroupItem value="right" className="flex-1 rounded p-2 hover:bg-accent">
                         <AlignRight size={20} />
                     </ToggleGroupItem>
                 </ToggleGroup>
@@ -190,7 +190,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
                         classes.map((cls) => (
                             <span
                                 key={cls}
-                                className="flex text-xs items-center gap-1 px-2 py-1 text-sm rounded-full bg-gray-100 border"
+                                className="flex items-center gap-1 rounded-full border bg-muted px-2 py-1 text-xs"
                             >
                                 {cls}
                                 <button
@@ -202,7 +202,7 @@ function ElementSettingSection({ selectedEl, clearSelection }: Props) {
                             </span>
                         ))
                     ) : (
-                        <span className="text-gray-400 text-sm">No classes applied</span>
+                        <span className="text-sm text-muted-foreground">No classes applied</span>
                     )}
                 </div>
 

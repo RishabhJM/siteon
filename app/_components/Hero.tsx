@@ -96,7 +96,7 @@ function Hero() {
         <h2 className="font-bold text-4xl md:text-6xl leading-tight">
           What are you shipping today?
         </h2>
-        <p className="mt-2 text-base md:text-xl text-gray-500">
+        <p className="mt-2 text-base text-muted-foreground md:text-xl">
           Build the website of your dreams, with just a few clicks
         </p>
       </div>
@@ -105,7 +105,7 @@ function Hero() {
       <div className="w-full max-w-2xl p-4 md:p-5 border mt-5 rounded-2xl">
         <textarea
           placeholder="Describe the design of your page"
-          className="w-full h-24 text-sm md:text-base focus:outline-none resize-none"
+          className="h-24 w-full resize-none bg-transparent text-sm text-foreground focus:outline-none md:text-base"
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
         />

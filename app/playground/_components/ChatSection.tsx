@@ -24,10 +24,10 @@ function ChatSection({ messages, onSend, loading }: Props) {
     
   },[])
   return (
-    <div className="w-full lg:w-96 shadow h-[50vh] lg:h-[92vh] p-4 flex flex-col justify-between">
+    <div className="flex h-[50vh] w-full flex-col justify-between border-r border-border bg-background p-4 shadow-sm lg:h-[92vh] lg:w-96">
       <div className="flex-1 overflow-y-auto">
         {messages?.length === 0 ? (
-          <p className="text-gray-400 text-center">No messages</p>
+          <p className="text-center text-sm text-muted-foreground">No messages</p>
         ) : (
           messages.map((msg, index) => (
             <div
@@ -37,8 +37,8 @@ function ChatSection({ messages, onSend, loading }: Props) {
               }`}
             >
               <div
-                className={`p-2 my-2 rounded-lg max-w-[80%] shadow
-						${msg.role === "user" ? "bg-gray-100 text-black" : "bg-gray-300 text-black"}`}
+                className={`my-2 max-w-[80%] rounded-xl p-3 text-sm shadow-sm
+						${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}
               >
                 {msg.content}
               </div>
@@ -47,14 +47,14 @@ function ChatSection({ messages, onSend, loading }: Props) {
         )}
         {loading && (
           <div className="flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-zinc-800"></div>
-            <span className="ml-2 text-zinc-800">Generating response...</span>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground"></div>
+            <span className="ml-2 text-sm text-muted-foreground">Generating response...</span>
           </div>
         )}
       </div>
       <div className="p-3 border-t flex items-center gap-2">
         <textarea
-          className="flex-1 resize-none border rounded-lg px-3 py-2 focus:outline-none focus:ring-2"
+          className="flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder="Start typing your ideas..."
           onChange={(event) => setInputMessage(event.target.value)}
           value={inputMessage}

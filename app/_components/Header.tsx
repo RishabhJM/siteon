@@ -6,6 +6,7 @@ import { ArrowRight, Menu, X } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
 import { useContext, useState } from "react";
 import { UserDetailsContext } from "@/context/UserDetailsContext";
+import ThemeToggle from "./ThemeToggle";
 
 const MenuOption = [
   { name: "Workspace", path: "/workspace" },
@@ -18,7 +19,7 @@ function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="shadow">
+    <header className="border-b border-border bg-background/80 shadow-sm backdrop-blur">
       <div className="flex justify-between items-center p-4 h-[10vh]">
         {/* Logo */}
         <div className="flex gap-2 items-center">
@@ -27,7 +28,7 @@ function Header() {
         </div>
 
         {/* Desktop Menu */}
-        <nav className="hidden md:flex gap-2 items-center">
+        <nav className="hidden items-center gap-2 md:flex">
           {MenuOption.map((option) => (
             <Button key={option.name} variant="ghost" asChild>
               <Link href={option.path}>{option.name}</Link>
@@ -36,7 +37,8 @@ function Header() {
         </nav>
 
         {/* Desktop CTA */}
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           {!userDetails ? (
             <SignInButton mode="redirect" forceRedirectUrl="/workspace">
               <Button>
@@ -53,12 +55,16 @@ function Header() {
         </div>
 
         {/* Mobile Hamburger */}
-        <button
-          className="md:hidden"
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+          aria-label={open ? "Close menu" : "Open menu"}
+          className="rounded-xl p-2 transition hover:bg-muted"
           onClick={() => setOpen(!open)}
-        >
-          {open ? <X size={28} /> : <Menu size={28} />}
-        </button>
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Collapsible Menu */}
