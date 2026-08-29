@@ -9,11 +9,15 @@ import { toast } from "sonner";
 import axios from "axios";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
+import type { HtmlPatch } from "../[projectId]/page";
 
 type Props = {
   generatedCode: string;
+  htmlPatches?: HtmlPatch[];
+  onCodeChange?: (html: string) => void;
 };
-function WebsiteDesign({ generatedCode }: Props) {
+
+function WebsiteDesign({ generatedCode, htmlPatches = [], onCodeChange }: Props) {
   const { projectId } = useParams();
   const params = useSearchParams();
   const frameId = params.get("frameId");
@@ -22,6 +26,7 @@ function WebsiteDesign({ generatedCode }: Props) {
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>();
   const {onSaveData,setOnSaveData} = useContext(OnSaveContext);
   const [iframeReady, setIframeReady] = useState(false);
+  const appliedPatchSignature = useRef("");
 
 
   useEffect(() => {
@@ -36,20 +41,71 @@ function WebsiteDesign({ generatedCode }: Props) {
     if (!doc) return;
     const root = doc.getElementById("root");
     if (!root) return;
-    const cleanCode = generatedCode
-      ?.replaceAll("```html", "")
-      .replaceAll("```", "")
-      .replace("<!--{code}-->", "")
-      .replace(/^html\n?/, "") ?? "";
+    const cleanCode = generatedCode?.trim() ?? "";
     root.innerHTML = cleanCode;
     setSelectedElement(null); // clear stale selection when DOM is replaced
   }, [generatedCode, iframeReady]);
+
+  useEffect(() => {
+    if (htmlPatches.length === 0) {
+      appliedPatchSignature.current = "";
+      return;
+    }
+    if (!iframeReady || !iframeRef.current) return;
+    const patchSignature = JSON.stringify(htmlPatches);
+    if (patchSignature === appliedPatchSignature.current) return;
+
+    const doc = iframeRef.current.contentDocument;
+    const root = doc?.getElementById("root");
+    if (!root) return;
+
+    let applied = false;
+    htmlPatches.forEach(({ selector, html }) => {
+      try {
+        const target = root.matches(selector)
+          ? root
+          : root.querySelector<HTMLElement>(selector);
+        if (!target) return;
+
+        // The iframe root is the document body. Preserve that root when a
+        // patch targets body/:root, otherwise replacing it breaks the editor.
+        if (target === root) {
+          const parsed = new DOMParser().parseFromString(html, "text/html");
+          const replacementBody = parsed.body;
+          Array.from(replacementBody.attributes).forEach((attribute) => {
+            if (attribute.name !== "id") root.setAttribute(attribute.name, attribute.value);
+          });
+          root.innerHTML = replacementBody.innerHTML;
+        } else {
+          target.outerHTML = html;
+        }
+        applied = true;
+      } catch (error) {
+        console.error("[playground] Failed to apply HTML patch:", { selector, error });
+      }
+    });
+
+    if (!applied) {
+      console.error("[playground] No HTML patch selector matched the preview:",
+        htmlPatches.map(({ selector }) => selector));
+    }
+
+    if (applied) {
+      appliedPatchSignature.current = patchSignature;
+      setSelectedElement(null);
+      onCodeChange?.(root.innerHTML);
+    }
+  }, [htmlPatches, iframeReady, onCodeChange]);
 
 
   const handleIframeLoad = () => {
     setIframeReady(true); // unblocks the content effect
     const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
+    // Keep the preview's browser color scheme independent from Siteon's
+    // next-themes class on the parent document.
+    doc.documentElement.style.colorScheme = "light";
+    iframeRef.current?.style.setProperty("color-scheme", "light");
     const root = doc.getElementById("root");
     if (!root) return;
 
@@ -145,6 +201,47 @@ function WebsiteDesign({ generatedCode }: Props) {
           selectedScreenSize={selectedScreenSize}
           setSelectedScreenSize={(v: string) => setSelectedScreenSize(v)}
           generatedCode={generatedCode}
+          getPreviewHtml={() => {
+            const documentElement = iframeRef.current?.contentDocument?.documentElement;
+            if (!documentElement) return "";
+
+            const snapshot = documentElement.cloneNode(true) as HTMLElement;
+            const sourceElements = [
+              documentElement,
+              ...Array.from(documentElement.querySelectorAll<HTMLElement>("*")),
+            ];
+            const snapshotElements = [
+              snapshot,
+              ...Array.from(snapshot.querySelectorAll<HTMLElement>("*")),
+            ];
+
+            // A new tab has a different viewport and can recalculate
+            // responsive/dark utility rules. Freeze the colors visible in
+            // the iframe so the standalone preview is visually identical.
+            sourceElements.forEach((source, index) => {
+              const target = snapshotElements[index];
+              const computed = source.ownerDocument.defaultView?.getComputedStyle(source);
+              if (!target || !computed) return;
+              [
+                ["color", computed.color],
+                ["background-color", computed.backgroundColor],
+                ["border-top-color", computed.borderTopColor],
+                ["border-right-color", computed.borderRightColor],
+                ["border-bottom-color", computed.borderBottomColor],
+                ["border-left-color", computed.borderLeftColor],
+              ].forEach(([property, value]) => {
+                target.style.setProperty(property, value, "important");
+              });
+            });
+
+            // The iframe's document has already been initialized. A new tab
+            // must not execute the shell or generated scripts a second time,
+            // otherwise Tailwind/Flowbite can produce a different theme state
+            // than the rendered iframe. Keep the generated styles in the
+            // snapshot, but make the snapshot static.
+            snapshot.querySelectorAll("script").forEach((script) => script.remove());
+            return `<!DOCTYPE html>\n${snapshot.outerHTML}`;
+          }}
         ></WebPageTools>
       </div>
       <div>

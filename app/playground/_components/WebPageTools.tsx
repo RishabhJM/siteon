@@ -16,6 +16,7 @@ function WebPageTools({
   selectedScreenSize,
   setSelectedScreenSize,
   generatedCode,
+  getPreviewHtml,
 }: any) {
   const [finalCode, setFinalCode] = useState<string>();
   const { has } = useAuth();
@@ -23,8 +24,9 @@ function WebPageTools({
   const hasUnlimitedAccess = has && has({ plan: "unlimited" });
 
   const downloadCode = () => {
-    if (!finalCode) return;
-    const blob = new Blob([finalCode], { type: "text/html" });
+    const previewHtml = getPreviewHtml?.() || finalCode;
+    if (!previewHtml) return;
+    const blob = new Blob([previewHtml], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -39,14 +41,15 @@ function WebPageTools({
     const cleanCode =
       (DEFAULT_HTML_HEADER.replace("<!--{code}-->", generatedCode) || "")
         .replaceAll("```html", "")
-        .replaceAll("```", "")
-        .replace("html", "") ?? "";
+        .replaceAll("```", "") ?? "";
     setFinalCode(cleanCode);
   }, [generatedCode]);
+  const getCurrentPreviewCode = () => getPreviewHtml?.() || finalCode;
   const openInNewTab = () => {
-    if (!finalCode) return;
+    const previewHtml = getCurrentPreviewCode();
+    if (!previewHtml) return;
 
-    const blob = new Blob([finalCode], { type: "text/html" });
+    const blob = new Blob([previewHtml], { type: "text/html" });
     const url = URL.createObjectURL(blob);
 
     window.open(url, "_blank");
@@ -79,7 +82,7 @@ function WebPageTools({
           View <SquareArrowOutUpRight></SquareArrowOutUpRight>
         </Button>
         {hasUnlimitedAccess && (
-          <ViewCodeBlock code={finalCode}>
+          <ViewCodeBlock code={getCurrentPreviewCode()}>
             <Button variant={"outline"}>
               View <Code></Code>
             </Button>

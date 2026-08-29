@@ -1,11 +1,22 @@
+// App-level theme support is intentionally opt-in while the iframe/theme
+// boundaries are being finalized.
+export const ENABLE_APP_DARK_MODE =
+  process.env.NEXT_PUBLIC_ENABLE_APP_DARK_MODE === "true";
+
 export const DEFAULT_HTML_HEADER = `
       <!DOCTYPE html>
+      <html class="siteon-preview" data-siteon-preview="true" style="color-scheme: light;">
       <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <meta name="description" content="AI Website Builder - Modern TailwindCSS + Flowbite Template">
+          <meta name="color-scheme" content="light">
           <title>AI Website Builder</title>
 
+          <!-- Keep the generated site's dark mode independent from Siteon's app theme. -->
+          <script>
+            tailwind.config = { darkMode: 'class' };
+          </script>
           <!-- Tailwind CSS -->
           <script src="https://cdn.tailwindcss.com"></script>
 
