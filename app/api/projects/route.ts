@@ -90,8 +90,6 @@ export async function GET(req: NextRequest) {
       .from(projectsTable)
       //@ts-ignore
       .where(eq(projectsTable.createdBy, userEmail));
-    console.log(projectsResult);
-
     return NextResponse.json({ projectsResult }, { status: 200 });
   } catch (error) {
     console.error("API ERROR:", error);

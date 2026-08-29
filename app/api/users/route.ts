@@ -49,10 +49,10 @@ export async function GET(req: NextRequest){
     try{
         const client = await clerkClient();
         const user = await client.users.getUser(id);
-        console.log("USER:", user);
         return NextResponse.json({user});
     }catch(ex:any){
-        console.log(ex);
+        console.error("[api/users GET] Failed to load user:", ex);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
     
 

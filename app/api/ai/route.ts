@@ -2,19 +2,42 @@ import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 
 export async function POST(req:NextRequest) {
+    const url = process.env.CHAT_COMPLETIONS_URL;
+    const model = process.env.CHAT_COMPLETIONS_MODEL;
+    const apiKey = process.env.GEMINI_API_KEY;
     try {
         const { messages } = await req.json();
+        if (!url || !model || !apiKey) {
+            throw new Error("Chat completions url or model or api key is not configured");
+        }
+
+        if (!Array.isArray(messages) || messages.length === 0) {
+            console.error("[api/ai POST] Missing messages in request");
+            return NextResponse.json({ error: "At least one message is required" }, { status: 400 });
+        }
+
+        // The Interactions API accepts a string input. The client currently
+        // sends OpenAI-shaped messages, so flatten their text before sending.
+        const input = messages
+            .map((message: { role?: string; content?: string }) => {
+                const content = typeof message.content === "string" ? message.content : "";
+                return message.role && message.role !== "user"
+                    ? `${message.role}:\n${content}`
+                    : content;
+            })
+            .filter(Boolean)
+            .join("\n\n");
 
         const response = await axios.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            url,
             {
-                model: "arcee-ai/trinity-large-preview:free", 
-                messages,
-                stream: true, // enable streaming
+                model,
+                input,
+                stream: true,
             },
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    "x-goog-api-key": apiKey,
                     "Content-Type": "application/json",
                     "HTTP-Referer": "http://localhost:3000", // optional
                     "X-Title": "My Next.js App", // optional
@@ -29,35 +52,53 @@ export async function POST(req:NextRequest) {
         const encoder = new TextEncoder();
 
         const readable = new ReadableStream({
-            async start(controller) {
+            start(controller) {
+                let buffer = "";
+                let closed = false;
+
+                const close = () => {
+                    if (!closed) {
+                        closed = true;
+                        controller.close();
+                    }
+                };
+
                 stream.on("data", (chunk:any) => {
-                    const payloads = chunk.toString().split("\n\n");
+                    buffer += chunk.toString("utf8");
+                    const payloads = buffer.split(/\r?\n\r?\n/);
+                    buffer = payloads.pop() ?? "";
+
                     for (const payload of payloads) {
-                        if (payload.includes("[DONE]")) {
-                            controller.close();
+                        const data = payload
+                            .split(/\r?\n/)
+                            .filter((line: string) => line.startsWith("data:"))
+                            .map((line: string) => line.slice("data:".length).trimStart())
+                            .join("\n");
+
+                        if (!data) continue;
+                        if (data === "[DONE]") {
+                            close();
                             return;
                         }
-                        if (payload.startsWith("data:")) {
-                            try {
-                                const data = JSON.parse(payload.replace("data:", ""));
-                                const text = data.choices[0]?.delta?.content;
-                                if (text) {
-                                    controller.enqueue(encoder.encode(text));
-                                }
-                            } catch (err) {
-                                console.error("Error parsing stream", err);
+
+                        try {
+                            const event = JSON.parse(data);
+                            if (event.event_type === "step.delta" && event.delta?.type === "text" && event.delta.text) {
+                                controller.enqueue(encoder.encode(event.delta.text));
                             }
+                        } catch (err) {
+                            console.error("Error parsing Gemini stream event", err);
                         }
                     }
                 });
 
                 stream.on("end", () => {
-                    controller.close();
+                    close();
                 });
 
                 stream.on("error", (err:any) => {
                     console.error("Stream error", err);
-                    controller.error(err);
+                    if (!closed) controller.error(err);
                 });
             },
         });
@@ -69,7 +110,10 @@ export async function POST(req:NextRequest) {
             },
         });
     } catch (error) {
-        console.error("API error:", error);
+        console.error(
+            "[api/ai POST] Request failed:",
+            error instanceof Error ? error.message : error
+        );
         return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
     }
 }

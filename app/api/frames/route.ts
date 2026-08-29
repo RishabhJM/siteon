@@ -47,19 +47,24 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const { designCode, frameId, projectId } = await req.json();
+  try {
+    const { designCode, frameId, projectId } = await req.json();
 
-  const result = await db
-    .update(framesTable)
-    .set({
-      designCode: designCode,
-    })
-    .where(
-      and(
-        eq(framesTable.frameId, frameId),
-        eq(framesTable.projectId, projectId)
-      )
-    );
+    await db
+      .update(framesTable)
+      .set({
+        designCode: designCode,
+      })
+      .where(
+        and(
+          eq(framesTable.frameId, frameId),
+          eq(framesTable.projectId, projectId)
+        )
+      );
 
-  return NextResponse.json({ result: "updated the design code in db" });
+    return NextResponse.json({ result: "updated the design code in db" });
+  } catch (error) {
+    console.error("[api/frames PUT] Failed to save design code:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

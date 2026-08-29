@@ -6,11 +6,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { desc, eq, inArray } from "drizzle-orm";
 import { chatTable, framesTable, projectsTable } from "@/config/schema";
 export async function GET(req: NextRequest) {
+  try {
     const user = await currentUser();
+    if (!user?.primaryEmailAddress?.emailAddress) {
+      console.error("[api/get-all-projects GET] Missing authenticated user email");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     // Get the project
 
     //@ts-ignore
-    const projects = await db.select().from(projectsTable).where(eq(projectsTable.createdBy, user?.primaryEmailAddress?.emailAddress))
+    const projects = await db.select().from(projectsTable).where(eq(projectsTable.createdBy, user.primaryEmailAddress.emailAddress))
     .orderBy(desc(projectsTable.createdAt));
 
     let results: {
@@ -47,4 +52,8 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(results);
+  } catch (error) {
+    console.error("[api/get-all-projects GET] Failed to load projects:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
